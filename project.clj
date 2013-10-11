@@ -1,10 +1,11 @@
-(defproject ib-re-actor "0.0.1"
+(defproject ib-re-actor "0.1.1-SNAPSHOT"
   :description "Clojure friendly wrapper for InteractiveBrokers java API"
-  :dependencies [[org.clojure/clojure "1.3.0"]
-                 [clj-time "0.3.0"]
-                 ;; download this from IB and add it to your local m2
-                 ;; repo, as per leiningen's instructions
-                 [jtsclient "9.6.7"]]
-  :dev-dependencies [[midje "1.3-alpha4"]
-                     [lein-exec "0.1"]
-                     [lein-marginalia "0.6.1"]])
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [clj-time "0.4.4"]
+                 [com.ib/jtsclient "9.68"]
+                 [org.clojure/tools.logging "0.2.3"]
+                 [clj-logging-config "1.9.10"]]
+  :repositories {"stuart" "http://stuartsierra.com/maven2"}
+  :plugins [[lein-midje "2.0.1"]]
+  :profiles {:dev {:dependencies [[midje "1.4.0"]
+                                  [com.stuartsierra/lazytest "1.2.3"]]}})

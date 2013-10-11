@@ -1,28 +1,31 @@
-(ns ib-re-actor.util)
+(ns ib-re-actor.util
+  (:use [ib-re-actor.translation]))
 
-(defmacro field-based-property
-  ([property-name field-name]
-     `(defn ~property-name
-        ([x#] (. x# ~field-name))
-        ([x# val#] (set! (. x# ~field-name) val#) x#)))
-  ([property-name field-name get-xform set-xform]
-     `(defn ~property-name
-        ([x#] (~get-xform (. x# ~field-name)))
-        ([x# val#] (set! (. x# ~field-name) (~set-xform val#)) x#))))
+(def ^:const option-flag-keywords #{:read-only})
 
-(defmacro if-set
-  ([attributes key object field]
-     `(if-set ~attributes ~key ~object ~field ~identity))
-  ([attributes key object field xform]
-     `(if-let [x# (get ~attributes ~key)]
-        (set! (. ~object ~field) (~xform x#)))))
+(defmacro field-props [& property-descriptors]
+  (reduce (fn [implementation [name field & options]]
+            (let [option-flags (set (take-while option-flag-keywords options))
+                  kw-args (drop-while option-flag-keywords options)
+                  {:keys [translation]} (apply hash-map kw-args)
+                  this (gensym "this")
+                  val (gensym "val")]
+              (assoc implementation (keyword name)
+                     `(fn
+                        ([~this]
+                           ~(if translation
+                              `(translate :from-ib ~translation (. ~this ~field))
+                              `(. ~this ~field)))
+                        ~@(if (not (option-flags :read-only))
+                            `(([~this ~val]
+                                 (set! (. ~this ~field)
+                                       ~(if translation
+                                          `(translate :to-ib ~translation ~val)
+                                          val))
+                                 ~this)))))))
+          {} property-descriptors))
 
-(defn if-assoc
-  ([attributes key val]
-     (if val
-       (assoc attributes key val)
-       attributes))
-  ([attributes key val xform]
-     (if val
-       (assoc attributes key (xform val))
-       attributes)))
+(defn assoc-if [map key val]
+  (if val
+    (assoc map key val)
+    map))
